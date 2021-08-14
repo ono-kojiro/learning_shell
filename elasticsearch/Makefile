@@ -11,6 +11,10 @@ uninstall:
 	sudo apt -y remove kibana
 	sudo apt -y remove elasticsearch
 
+remove-purge :	
+	sudo apt -y remove --purge kibana
+	sudo apt -y remove --purge elasticsearch
+
 is-active :
 	-sudo systemctl is-active elasticsearch
 	-sudo systemctl is-active kibana
@@ -26,6 +30,9 @@ restart :
 stop :
 	sudo systemctl stop elasticsearch
 	sudo systemctl stop kibana
+
+test-http:
+	curl http://localhost:9200/
 
 backup :
 	sudo tar -C /etc -czvf etc_elasticsearch.tar.gz elasticsearch/
