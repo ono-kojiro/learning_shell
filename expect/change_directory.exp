@@ -1,0 +1,60 @@
+#!/usr/bin/expect -f
+
+# parse arguments
+#set baudrate [lrange $argv 0 0]
+#set device   [lrange $argv 1 1]
+
+set baudrate 115200
+set device   /dev/ttyS0
+
+set prompt "root@debian:"
+set regex "${prompt}(.*)# "
+
+set timeout 5
+
+proc send_command { cmd } {
+  send "$cmd\n"
+}
+
+proc wait_prompt { } {
+  global regex
+
+  # wait for next prompt
+  expect {
+    -indices -re "$regex"  {
+      puts ""
+      puts "DEBUG : current directory is $expect_out(1,string)"
+    }
+  }
+}
+
+proc check_exit_code { } {
+  send_command "echo \$?"
+ 
+  expect {
+    -indices -re "(\\d+)" {
+      return $expect_out(1,string)
+	}
+  }
+}
+
+# start
+spawn picocom -b $baudrate $device
+
+# wait for picocom message
+expect "Terminal ready"
+
+# send enter
+send_command ""
+wait_prompt
+
+send_command "cd; mkdir -p tmp; cd tmp"
+wait_prompt
+
+set ret [check_exit_code]
+
+puts "DEBUG : exit code is $ret"
+
+exit 0
+
+  

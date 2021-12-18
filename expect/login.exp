@@ -1,0 +1,70 @@
+#!/usr/bin/expect -f
+
+# parse arguments
+#set baudrate [lrange $argv 0 0]
+#set device   [lrange $argv 1 1]
+
+set baudrate 115200
+set device   /dev/ttyS0
+
+set prompt "root@debian:"
+
+set timeout 5
+set password {}
+
+set configfile "config.txt"
+
+set fp [open $configfile r]
+while {![eof $fp]} {
+  set line [gets $fp]
+  if { $line eq "" } { continue }
+
+  set tokens [split $line "="]
+  lassign $tokens key value
+  if { $key eq "password" } {
+    set password $value
+  } else {
+    puts "ERROR : In $configfile, invalid key, $key"
+	exit 1
+  }
+}
+close $fp
+
+spawn picocom -b $baudrate $device
+
+# wait for picocom message
+expect "Terminal ready"
+
+puts "This is debug print."
+
+# send enter and confirm the response
+send "\n"
+
+expect {
+  # if login prompt...
+  "debian login:" {
+    puts ""
+    puts "DEBUG : login prompt found"
+    send "root\n"
+
+    # continue for password prompt
+	exp_continue
+  }
+
+  "Password:" {
+    puts ""
+    puts "DEBUG : password prompt found"
+    send "$password\n"
+	exp_continue
+  }
+    
+  -regexp "$prompt.*# " {
+      puts ""
+      puts "DEBUG : prompt found"
+      send "id\n"
+  }
+}
+
+exit 0
+
+  
